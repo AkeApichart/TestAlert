@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1e3a5f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TestAlert">
+<title>ระบบแจ้งเตือนงานทดสอบ</title>
+<style>
+:root{--primary:#1e3a5f;--primary-light:#2d5a8c;--success:#059669;--success-bg:#ecfdf5;--warning:#b45309;--warning-bg:#fffbeb;--danger:#dc2626;--danger-bg:#fef2f2;--done-bg:#f0f9ff;--done:#0369a1;--gray-50:#f8fafc;--gray-100:#f1f5f9;--gray-200:#e2e8f0;--gray-300:#cbd5e1;--gray-500:#64748b;--gray-700:#334155;--gray-900:#0f172a;--radius:8px;--shadow:0 1px 3px rgba(0,0,0,.1);--shadow-md:0 4px 12px rgba(0,0,0,.12)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',-apple-system,'Noto Sans Thai',Tahoma,sans-serif;background:var(--gray-100);color:var(--gray-900);min-height:100vh;font-size:14px;line-height:1.5}
+.header{background:var(--primary);color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow-md)}
+.header h1{font-size:16px;font-weight:700}
+.header-sub{font-size:11px;opacity:.55;margin-top:1px}
+.header-right{display:flex;align-items:center;gap:12px}
+.header-stats{display:flex;gap:12px;font-size:12px;text-align:right}
+.stat-val{font-size:15px;font-weight:800;display:block}
+.stat-lbl{font-size:10px;opacity:.65;display:block}
+.notif-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:6px;white-space:nowrap}
+.notif-btn:hover{background:rgba(255,255,255,.25)}
+.notif-btn.granted{background:rgba(5,150,105,.35);border-color:rgba(52,211,153,.5)}
+.notif-btn.denied{background:rgba(220,38,38,.25);border-color:rgba(252,165,165,.4);opacity:.7}
+.notif-bar{padding:10px 20px;font-size:13px;font-weight:600;border-bottom:1px solid;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.notif-danger{background:#fee2e2;color:#7f1d1d;border-color:#fca5a5}
+.notif-warning{background:#fef3c7;color:#78350f;border-color:#fcd34d}
+.tabs{background:#fff;border-bottom:1px solid var(--gray-200);padding:0 20px;display:flex;overflow-x:auto}
+.tab-btn{padding:13px 17px;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;font-size:13px;font-weight:600;color:var(--gray-500);transition:all .15s;font-family:inherit;white-space:nowrap}
+.tab-btn.active{color:var(--primary);border-bottom-color:var(--primary)}
+.tab-btn:hover:not(.active){color:var(--gray-700);background:var(--gray-50)}
+.content{padding:18px 20px;max-width:1100px;margin:0 auto}
+.hidden{display:none!important}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.section-title{font-size:15px;font-weight:700}
+.badge-count{font-size:12px;color:var(--gray-500);background:var(--gray-200);padding:3px 10px;border-radius:20px;font-weight:600}
+.group-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;display:flex;align-items:center;gap:8px;grid-column:1/-1}
+.group-label::after{content:'';flex:1;height:1px;background:var(--gray-200)}
+.group-danger{color:var(--danger)}.group-warning{color:var(--warning)}.group-ok{color:var(--success)}.group-done{color:var(--done)}
+.pieces-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:13px}
+.piece-card{background:#fff;border-radius:var(--radius);border:1px solid var(--gray-200);border-left:4px solid var(--gray-300);padding:14px 14px 11px;box-shadow:var(--shadow);transition:box-shadow .15s,transform .1s}
+.piece-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.piece-card.s-danger{border-left-color:var(--danger)}.piece-card.s-warning{border-left-color:#f59e0b}.piece-card.s-ok{border-left-color:var(--success)}.piece-card.s-done{border-left-color:var(--done);opacity:.75}
+.pc-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:11px;gap:8px}
+.pc-name{font-size:14px;font-weight:700}.pc-number{font-size:11px;color:var(--gray-500);margin-top:2px;font-weight:600}
+.status-pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.pill-danger{background:var(--danger-bg);color:var(--danger)}.pill-warning{background:var(--warning-bg);color:#92400e}.pill-ok{background:var(--success-bg);color:#065f46}.pill-done{background:var(--done-bg);color:var(--done)}
+.pc-info{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:11px}
+.pi-item{display:flex;flex-direction:column;gap:1px}
+.pi-lbl{font-size:10px;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+.pi-val{font-size:12px;font-weight:600;color:var(--gray-700)}
+.pi-val.v-danger{color:var(--danger)}.pi-val.v-warning{color:var(--warning)}.pi-val.v-ok{color:var(--success)}.pi-val.v-done{color:var(--done)}
+.countdown-box{background:var(--gray-50);border-radius:6px;padding:8px 10px;margin-bottom:11px;border:1px solid var(--gray-200);text-align:center}
+.cd-days{font-size:26px;font-weight:800;letter-spacing:-1px}
+.cd-label{font-size:11px;color:var(--gray-500);font-weight:500}
+.cd-danger .cd-days{color:var(--danger)}.cd-warning .cd-days{color:#d97706}.cd-ok .cd-days{color:var(--success)}.cd-done .cd-days{color:var(--done)}
+/* Stage progress bar */
+.stage-bar{display:flex;gap:4px;margin-bottom:11px}
+.stage-dot{flex:1;height:6px;border-radius:3px;background:var(--gray-200)}
+.stage-dot.done{background:var(--success)}
+.stage-dot.active{background:var(--primary)}
+.stage-lbl{font-size:11px;color:var(--gray-500);text-align:center;margin-top:3px;margin-bottom:8px}
+.pc-actions{display:flex;gap:7px;border-top:1px solid var(--gray-100);padding-top:10px}
+/* Buttons */
+.btn{padding:7px 14px;border-radius:var(--radius);font-size:12px;font-weight:700;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn-primary{background:var(--primary);color:#fff;flex:1}.btn-primary:hover{background:var(--primary-light)}
+.btn-edit{background:var(--gray-100);color:var(--primary);border:1px solid var(--gray-200)}.btn-edit:hover{background:#dbeafe;border-color:#93c5fd}
+.btn-ghost{background:var(--gray-100);color:var(--gray-500);border:1px solid var(--gray-200)}.btn-ghost:hover{background:var(--gray-200);color:var(--danger)}
+.btn-big{padding:10px 20px;font-size:13px}.btn-full{width:100%}
+/* Form */
+.form-wrap{max-width:620px}
+.form-card{background:#fff;border-radius:var(--radius);border:1px solid var(--gray-200);padding:20px;box-shadow:var(--shadow);margin-bottom:13px}
+.form-card-title{font-size:14px;font-weight:700;margin-bottom:16px;padding-bottom:11px;border-bottom:1px solid var(--gray-100);display:flex;justify-content:space-between;align-items:center}
+.form-group{margin-bottom:15px}
+.form-label{display:block;font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:5px}
+.req{color:var(--danger);margin-left:2px}
+.form-input,.form-select,.form-textarea{width:100%;padding:8px 11px;border:1.5px solid var(--gray-300);border-radius:var(--radius);font-size:13px;color:var(--gray-900);background:#fff;transition:border-color .15s,box-shadow .15s;font-family:inherit}
+.form-input:focus,.form-select:focus,.form-textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(30,58,95,.12)}
+.form-textarea{resize:vertical;min-height:75px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.form-hint{font-size:11px;color:var(--gray-500);margin-top:3px}
+/* Interval type toggle */
+.itype-row{display:flex;gap:8px;margin-bottom:14px}
+.itype-btn{flex:1;padding:9px;border:1.5px solid var(--gray-300);border-radius:var(--radius);font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:var(--gray-700);transition:all .15s;font-family:inherit;text-align:center}
+.itype-btn.sel{background:var(--primary);color:#fff;border-color:var(--primary)}
+.itype-btn:hover:not(.sel){border-color:var(--primary);color:var(--primary)}
+/* Repeat interval */
+.interval-group{display:flex;gap:7px;flex-wrap:wrap}
+.interval-btn{padding:7px 14px;border:1.5px solid var(--gray-300);border-radius:var(--radius);font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:var(--gray-700);transition:all .15s;font-family:inherit}
+.interval-btn.sel{background:var(--primary);color:#fff;border-color:var(--primary)}
+.interval-btn:hover:not(.sel){border-color:var(--primary);color:var(--primary)}
+.custom-days-row{display:flex;align-items:center;gap:8px;margin-top:9px}
+/* Stage builder */
+.stage-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.stage-row{display:flex;align-items:center;gap:8px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:9px 11px}
+.stage-num{font-size:11px;font-weight:800;color:#fff;background:var(--primary);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.stage-inputs{display:flex;align-items:center;gap:6px;flex:1;flex-wrap:wrap}
+.stage-del{background:none;border:none;color:var(--gray-300);font-size:18px;cursor:pointer;padding:0;line-height:1;flex-shrink:0}
+.stage-del:hover{color:var(--danger)}
+.add-stage-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;border:1.5px dashed var(--gray-300);border-radius:var(--radius);background:none;cursor:pointer;font-size:12px;font-weight:700;color:var(--gray-500);font-family:inherit;transition:all .15s;width:100%}
+.add-stage-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--gray-50)}
+/* History */
+.hist-item{background:#fff;border-radius:var(--radius);border:1px solid var(--gray-200);padding:13px 14px;margin-bottom:9px;box-shadow:var(--shadow)}
+.hist-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:7px;gap:10px}
+.hist-title{font-size:14px;font-weight:700}.hist-sub{font-size:12px;color:var(--gray-500);margin-top:2px}
+.hist-meta{display:flex;gap:12px;font-size:12px;color:var(--gray-500);margin-bottom:7px;flex-wrap:wrap}
+.hist-notes{font-size:13px;color:var(--gray-700);background:var(--gray-50);padding:7px 10px;border-radius:6px;border:1px solid var(--gray-200);margin-top:7px}
+.result-pill{font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;flex-shrink:0}
+.r-pass{background:var(--success-bg);color:#065f46}.r-fail{background:var(--danger-bg);color:#7f1d1d}.r-conditional{background:var(--warning-bg);color:#78350f}
+.progress-wrap{display:flex;align-items:center;gap:8px;margin-top:8px;border-top:1px solid var(--gray-100);padding-top:8px}
+.progress-bar{flex:1;height:5px;background:var(--gray-200);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--success);border-radius:3px}
+.progress-label{font-size:11px;color:var(--gray-500);font-weight:600;white-space:nowrap}
+/* Notification tab */
+.notif-setup-card{background:#fff;border-radius:var(--radius);border:1px solid var(--gray-200);padding:20px;margin-bottom:13px;box-shadow:var(--shadow)}
+.notif-setup-card h3{font-size:14px;font-weight:700;margin-bottom:4px}
+.notif-setup-card .sub{font-size:13px;color:var(--gray-500);margin-bottom:14px;line-height:1.6}
+.perm-box{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--radius);border:1.5px solid var(--gray-200);margin-bottom:13px}
+.perm-icon{font-size:22px;flex-shrink:0}
+.perm-text h4{font-size:13px;font-weight:700}
+.perm-text p{font-size:12px;color:var(--gray-500);margin-top:2px;margin-bottom:0}
+.perm-granted{border-color:#6ee7b7;background:var(--success-bg)}
+.perm-denied{border-color:#fca5a5;background:var(--danger-bg)}
+.perm-default{border-color:#fcd34d;background:var(--warning-bg)}
+.notif-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--gray-100);gap:12px}
+.notif-row:last-child{border-bottom:none}
+.nrl{font-size:13px;font-weight:600;color:var(--gray-700)}.nrs{font-size:11px;color:var(--gray-500);margin-top:2px}
+.toggle{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:var(--gray-300);border-radius:12px;transition:.25s}
+.toggle-slider:before{position:absolute;content:'';height:18px;width:18px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.25s}
+.toggle input:checked+.toggle-slider{background:var(--primary)}
+.toggle input:checked+.toggle-slider:before{transform:translateX(18px)}
+.sched-box{background:var(--gray-50);border-radius:var(--radius);border:1px solid var(--gray-200);padding:12px 14px;margin-top:12px}
+.sched-box h4{font-size:11px;font-weight:700;color:var(--gray-700);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
+.sched-item{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--gray-100)}
+.sched-item:last-child{border-bottom:none}
+.sched-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-danger{background:var(--danger)}.dot-warning{background:#f59e0b}.dot-ok{background:var(--success)}
+.sched-info{flex:1;min-width:0}
+.sched-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sched-detail{font-size:11px;color:var(--gray-500)}
+.info-box{padding:11px 13px;border-radius:var(--radius);border:1px solid var(--gray-200);margin-top:12px;font-size:12px;line-height:1.75;background:var(--gray-50);color:var(--gray-700)}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.65);z-index:1000;display:flex;align-items:flex-start;justify-content:center;padding:20px 14px;overflow-y:auto}
+.modal-overlay.hidden{display:none}
+.modal{background:#fff;border-radius:12px;width:100%;max-width:520px;margin:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+.modal-head{background:var(--primary);color:#fff;padding:14px 18px;display:flex;justify-content:space-between;align-items:center}
+.modal-head h2{font-size:15px;font-weight:700}
+.modal-close{background:none;border:none;color:#fff;font-size:22px;cursor:pointer;padding:0;line-height:1;opacity:.7}
+.modal-close:hover{opacity:1}
+.modal-body{padding:16px 18px;max-height:70vh;overflow-y:auto}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--gray-200);display:flex;justify-content:flex-end;gap:8px;background:var(--gray-50)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;background:var(--gray-50);border:1px solid var(--gray-200);border-radius:var(--radius);padding:11px;margin-bottom:14px}
+.ig-item{display:flex;flex-direction:column;gap:2px}
+.ig-lbl{font-size:10px;color:var(--gray-500);text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+.ig-val{font-size:13px;font-weight:700}
+.divider{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--gray-500);margin:14px 0 9px;display:flex;align-items:center;gap:8px}
+.divider::after{content:'';flex:1;height:1px;background:var(--gray-200)}
+.cl-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border:1.5px solid var(--gray-200);border-radius:var(--radius);cursor:pointer;margin-bottom:5px;transition:all .1s;background:#fff}
+.cl-item:hover{background:var(--gray-50)}
+.cl-item.cl-checked{background:var(--success-bg);border-color:#6ee7b7}
+.cl-item input[type=checkbox]{width:15px;height:15px;accent-color:var(--success);cursor:pointer;flex-shrink:0}
+.cl-label{font-size:13px;color:var(--gray-700)}
+.cl-checked .cl-label{color:#065f46;text-decoration:line-through;opacity:.7}
+.result-opts{display:flex;gap:7px}
+.r-opt{flex:1;padding:8px 6px;border:2px solid var(--gray-200);border-radius:var(--radius);text-align:center;cursor:pointer;font-size:12px;font-weight:700;background:#fff;transition:all .15s;font-family:inherit}
+.r-opt:hover{background:var(--gray-50)}
+.r-pass-sel{border-color:var(--success)!important;background:var(--success-bg)!important;color:#065f46!important}
+.r-fail-sel{border-color:var(--danger)!important;background:var(--danger-bg)!important;color:#7f1d1d!important}
+.r-cond-sel{border-color:#f59e0b!important;background:var(--warning-bg)!important;color:#78350f!important}
+.empty-state{text-align:center;padding:44px 20px;grid-column:1/-1}
+.empty-icon{font-size:42px;opacity:.2;margin-bottom:12px}
+.empty-state h3{font-size:16px;font-weight:700;color:var(--gray-700);margin-bottom:5px}
+.empty-state p{font-size:13px;color:var(--gray-500);margin-bottom:16px}
+.toast{position:fixed;bottom:22px;right:20px;background:#1e293b;color:#fff;padding:11px 16px;border-radius:var(--radius);font-size:13px;font-weight:600;box-shadow:var(--shadow-md);z-index:2000;display:none;max-width:300px;line-height:1.4}
+.toast.show{display:block;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{transform:translateY(10px);opacity:0}to{transform:translateY(0);opacity:1}}
+@supports(padding:max(0px)){.header{padding-top:max(14px,env(safe-area-inset-top))}}
+@media(max-width:560px){
+  .content{padding:14px 14px}
+  .form-row{grid-template-columns:1fr}
+  .pieces-grid{grid-template-columns:1fr}
+  .header-stats{display:none}
+  .result-opts{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<div id="notif-bar" style="display:none"></div>
+
+<header class="header">
+  <div>
+    <h1>ระบบแจ้งเตือนงานทดสอบ</h1>
+    <div class="header-sub">Test Maintenance Reminder</div>
+  </div>
+  <div class="header-right">
+    <button id="notif-perm-btn" class="notif-btn" onclick="handleNotifPermission()">
+      <span id="notif-btn-icon">🔔</span>
+      <span id="notif-btn-text">เปิดแจ้งเตือน</span>
+    </button>
+    <div class="header-stats">
+      <div><span id="hstat-total" class="stat-val">—</span><span class="stat-lbl">ทั้งหมด</span></div>
+      <div><span id="hstat-due" class="stat-val" style="color:#fca5a5">—</span><span class="stat-lbl">รอดำเนินการ</span></div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab-btn active" id="tbtn-dashboard" onclick="switchTab('dashboard')">แดชบอร์ด</button>
+  <button class="tab-btn" id="tbtn-add" onclick="switchTab('add')">+ เพิ่มชิ้นงาน</button>
+  <button class="tab-btn" id="tbtn-history" onclick="switchTab('history')">ประวัติ</button>
+  <button class="tab-btn" id="tbtn-notif" onclick="switchTab('notif')">🔔 แจ้งเตือน</button>
+</nav>
+
+<!-- DASHBOARD -->
+<div id="tab-dashboard" class="content">
+  <div class="section-header">
+    <div class="section-title">รายการชิ้นงาน</div>
+    <span id="dash-count" class="badge-count">0 รายการ</span>
+  </div>
+  <div id="pieces-grid" class="pieces-grid"></div>
+</div>
+
+<!-- ADD / EDIT FORM -->
+<div id="tab-add" class="content hidden">
+  <div class="form-wrap">
+    <div class="form-card">
+      <div class="form-card-title">
+        <span id="form-title-text">ข้อมูลชิ้นงาน</span>
+        <span id="form-edit-badge" class="hidden" style="font-size:11px;background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:20px;font-weight:700">แก้ไข</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">ชื่อชิ้นงาน <span class="req">*</span></label>
+          <input type="text" id="f-name" class="form-input" placeholder="เช่น เครื่องวัดแรงดัน">
+        </div>
+        <div class="form-group">
+          <label class="form-label">เลขที่ชิ้นงาน <span class="req">*</span></label>
+          <input type="text" id="f-number" class="form-input" placeholder="เช่น TG-2024-001">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">หัวข้อทดสอบ <span class="req">*</span></label>
+        <input type="text" id="f-topic" class="form-input" placeholder="เช่น สอบเทียบความดัน / ทดสอบฉนวนไฟฟ้า">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">ผู้รับผิดชอบ / หน่วยงาน</label>
+          <input type="text" id="f-owner" class="form-input" placeholder="เช่น ฝ่าย QC">
+        </div>
+        <div class="form-group">
+          <label class="form-label">ตำแหน่ง / สถานที่</label>
+          <input type="text" id="f-location" class="form-input" placeholder="เช่น ห้อง Lab A">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">หมายเหตุ</label>
+        <input type="text" id="f-note" class="form-input" placeholder="ข้อมูลเพิ่มเติม...">
+      </div>
+    </div>
+
+    <div class="form-card">
+      <div class="form-card-title">กำหนดการทดสอบ</div>
+
+      <!-- Interval type selector -->
+      <div class="form-group">
+        <label class="form-label">ประเภทการทดสอบ</label>
+        <div class="itype-row">
+          <button class="itype-btn sel" id="itype-repeat" onclick="setItype('repeat')">🔁 ทำซ้ำ (Recurring)</button>
+          <button class="itype-btn" id="itype-staged" onclick="setItype('staged')">📋 แบบขั้นตอน (Staged)</button>
+        </div>
+      </div>
+
+      <!-- REPEAT mode -->
+      <div id="repeat-section">
+        <div class="form-group">
+          <label class="form-label">รอบการทดสอบ <span class="req">*</span></label>
+          <div class="interval-group">
+            <button class="interval-btn" data-days="30" onclick="selInterval(this)">1 เดือน</button>
+            <button class="interval-btn" data-days="90" onclick="selInterval(this)">3 เดือน</button>
+            <button class="interval-btn" data-days="180" onclick="selInterval(this)">6 เดือน</button>
+            <button class="interval-btn" data-days="365" onclick="selInterval(this)">1 ปี</button>
+            <button class="interval-btn" data-days="0" onclick="selInterval(this)">กำหนดเอง</button>
+          </div>
+          <div id="custom-row" class="custom-days-row hidden">
+            <input type="number" id="f-custom-days" class="form-input" style="width:90px" placeholder="วัน" min="1" max="3650">
+            <span style="font-size:13px;color:var(--gray-500);font-weight:600">วัน</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAGED mode -->
+      <div id="staged-section" class="hidden">
+        <label class="form-label">กำหนดช่วงเวลาแต่ละครั้ง <span class="req">*</span></label>
+        <div class="form-hint" style="margin-bottom:10px">เช่น ครั้งที่ 1 = 1 เดือน, ครั้งที่ 2 = 3 เดือน — ทำครบแล้วหยุด ไม่ทำซ้ำ</div>
+        <div id="stage-list" class="stage-list"></div>
+        <button class="add-stage-btn" onclick="addStageRow()">+ เพิ่มครั้งที่ทดสอบ</button>
+      </div>
+
+      <div class="form-row" style="margin-top:14px">
+        <div class="form-group">
+          <label class="form-label">วันที่ทดสอบล่าสุด</label>
+          <input type="date" id="f-last-date" class="form-input">
+          <div class="form-hint">ถ้าไม่ระบุ ระบบจะนับจากวันนี้</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:9px">
+      <button class="btn btn-primary btn-big" id="form-save-btn" onclick="savePiece()" style="flex:1">บันทึกชิ้นงาน</button>
+      <button class="btn btn-ghost btn-big" onclick="cancelForm()">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div id="tab-history" class="content hidden">
+  <div class="section-header">
+    <div class="section-title">ประวัติการทดสอบ</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <select id="hist-filter-piece" class="form-select" style="width:175px;padding:6px 10px" onchange="renderHistory()">
+        <option value="">ชิ้นงานทั้งหมด</option>
+      </select>
+      <select id="hist-filter-result" class="form-select" style="width:135px;padding:6px 10px" onchange="renderHistory()">
+        <option value="">ผลทั้งหมด</option>
+        <option value="pass">ผ่าน</option>
+        <option value="fail">ไม่ผ่าน</option>
+        <option value="conditional">มีเงื่อนไข</option>
+      </select>
+    </div>
+  </div>
+  <div id="history-list"></div>
+</div>
+
+<!-- NOTIFICATION SETTINGS -->
+<div id="tab-notif" class="content hidden">
+  <div class="form-wrap" style="max-width:600px">
+    <div class="notif-setup-card">
+      <h3>สถานะการแจ้งเตือน</h3>
+      <p class="sub">ระบบจะส่ง Push Notification เมื่อมีชิ้นงานที่ใกล้หรือเกินกำหนดทดสอบ</p>
+      <div id="perm-box" class="perm-box perm-default">
+        <span class="perm-icon">🔔</span>
+        <div class="perm-text"><h4>ยังไม่ได้เปิดการแจ้งเตือน</h4><p>กดปุ่มด้านล่างเพื่อเริ่มรับการแจ้งเตือน</p></div>
+      </div>
+      <button id="perm-main-btn" class="btn btn-primary btn-big btn-full" onclick="handleNotifPermission()">🔔 ขอสิทธิ์รับการแจ้งเตือน</button>
+      <div id="ios-hint" class="info-box hidden" style="margin-top:12px;background:#fffbeb;border-color:#fcd34d;color:#78350f">
+        <strong>📱 iPhone / iPad (iOS 16.4+):</strong><br>
+        1. กดปุ่ม Share ใน Safari → "Add to Home Screen"<br>
+        2. เปิดแอปจาก Home Screen (ไม่ใช่จาก Safari)<br>
+        3. กลับมากดขอสิทธิ์อีกครั้ง
+      </div>
+    </div>
+    <div class="notif-setup-card">
+      <h3>ตั้งค่าการแจ้งเตือน</h3>
+      <p class="sub">กำหนดเงื่อนไขการแจ้งเตือน</p>
+      <div class="notif-row">
+        <div><div class="nrl">เวลาแจ้งเตือนประจำวัน</div><div class="nrs">แจ้งเตือนครั้งแรกเมื่อเปิดแอปหลังเวลานี้</div></div>
+        <input type="time" id="notif-time-input" class="form-input" style="width:120px" value="08:00" onchange="saveNotifSettings()">
+      </div>
+      <div class="notif-row">
+        <div><div class="nrl">แจ้งเตือนล่วงหน้า 7 วัน</div><div class="nrs">แจ้งเตือนก่อนครบกำหนด 1 สัปดาห์</div></div>
+        <label class="toggle"><input type="checkbox" id="tog-7day" checked onchange="saveNotifSettings()"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="notif-row">
+        <div><div class="nrl">แจ้งเตือนวันครบกำหนด</div><div class="nrs">แจ้งเตือนในวันที่ต้องทดสอบ</div></div>
+        <label class="toggle"><input type="checkbox" id="tog-dueday" checked onchange="saveNotifSettings()"><span class="toggle-slider"></span></label>
+      </div>
+      <div class="notif-row">
+        <div><div class="nrl">แจ้งเตือนเมื่อเกินกำหนด</div><div class="nrs">แจ้งเตือนซ้ำทุกวันจนกว่าจะบันทึกผล</div></div>
+        <label class="toggle"><input type="checkbox" id="tog-overdue" checked onchange="saveNotifSettings()"><span class="toggle-slider"></span></label>
+      </div>
+      <button class="btn btn-primary btn-big btn-full" style="margin-top:14px" onclick="testNotification()">🔔 ทดสอบส่ง Notification</button>
+    </div>
+    <div class="notif-setup-card">
+      <h3>ตารางแจ้งเตือนใน 30 วันข้างหน้า</h3>
+      <p class="sub">รายการชิ้นงานที่จะได้รับการแจ้งเตือน</p>
+      <div id="sched-preview"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TEST RESULT MODAL -->
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>บันทึกผลการทดสอบ</h2>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-info" class="info-grid"></div>
+      <div class="form-group">
+        <label class="form-label">วันที่ทดสอบ <span class="req">*</span></label>
+        <input type="date" id="modal-date" class="form-input">
+      </div>
+      <div class="divider">Checklist หลังทำงาน</div>
+      <div id="modal-checklist"></div>
+      <div class="divider">ผลการทดสอบ</div>
+      <div class="form-group">
+        <label class="form-label">ผลลัพธ์ <span class="req">*</span></label>
+        <div class="result-opts">
+          <button class="r-opt" id="r-pass" onclick="selResult('pass')">✓ ผ่าน</button>
+          <button class="r-opt" id="r-fail" onclick="selResult('fail')">✗ ไม่ผ่าน</button>
+          <button class="r-opt" id="r-conditional" onclick="selResult('conditional')">⚡ มีเงื่อนไข</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ค่าที่วัดได้ / หมายเหตุ</label>
+        <textarea id="modal-notes" class="form-textarea" placeholder="ระบุค่าที่วัดได้ เงื่อนไขพิเศษ หรือข้อสังเกต..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveTestResult()">บันทึกผลการทดสอบ</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+let pieces = [], testHistory = [];
+let selIntervalDays = 0, currentItype = 'repeat', stageRows = [];
+let modalPieceId = null, selResultType = null, modalCL = [];
+let editingPieceId = null;
+let notifSettings = { time:'08:00', tog7day:true, togDueday:true, togOverdue:true };
+let notifCheckInterval = null;
+
+const DEFAULT_CL = [
+  'ตรวจสอบความพร้อมอุปกรณ์และเครื่องมือทดสอบ',
+  'บันทึกสภาวะแวดล้อม (อุณหภูมิ / ความชื้น / แรงดัน)',
+  'ดำเนินการทดสอบตามมาตรฐาน / ขั้นตอนที่กำหนด',
+  'วัดและบันทึกค่าผลการทดสอบอย่างครบถ้วน',
+  'ตรวจสอบความถูกต้องและความสมเหตุสมผลของผล',
+  'รายงานผลและส่งมอบเอกสารต่อผู้รับผิดชอบ'
+];
+const PRESET_DAYS = [
+  {label:'1 เดือน', days:30},
+  {label:'3 เดือน', days:90},
+  {label:'6 เดือน', days:180},
+  {label:'1 ปี', days:365}
+];
+
+// ─────────────────────────────────────────────
+// STORAGE
+// ─────────────────────────────────────────────
+function storageGet(k) { try { const v=localStorage.getItem(k); return v?JSON.parse(v):null; } catch(e){return null;} }
+function storageSet(k,v) { try { localStorage.setItem(k,JSON.stringify(v)); } catch(e){} }
+
+function load() {
+  pieces        = storageGet('trm_pieces')  || [];
+  testHistory   = storageGet('trm_history') || [];
+  notifSettings = {...notifSettings,...(storageGet('trm_notif')||{})};
+  renderAll(); updateNotifUI();
+  if (Notification.permission==='granted') { checkAndNotify(); startHourlyCheck(); }
+}
+function persist() {
+  storageSet('trm_pieces', pieces);
+  storageSet('trm_history', testHistory);
+  storageSet('trm_notif', notifSettings);
+}
+
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+function daysUntil(s) {
+  if (!s) return null;
+  const now=new Date(); now.setHours(0,0,0,0);
+  const t=new Date(s); t.setHours(0,0,0,0);
+  return Math.round((t-now)/86400000);
+}
+function addDays(s,d) { const dt=new Date(s); dt.setDate(dt.getDate()+d); return dt.toISOString().split('T')[0]; }
+function fmtDate(s) { if(!s)return'—'; return new Date(s).toLocaleDateString('th-TH',{year:'numeric',month:'short',day:'numeric'}); }
+function intervalLbl(d) { if(d===30)return'1 เดือน'; if(d===90)return'3 เดือน'; if(d===180)return'6 เดือน'; if(d===365)return'1 ปี'; return`${d} วัน`; }
+function uid() { return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function esc(s) { return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):''; }
+function showToast(msg) { const t=document.getElementById('toast'); t.innerHTML=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3800); }
+
+// Get status of a piece
+function getStatus(p) {
+  if (p.completed) return 'done';
+  const d = daysUntil(p.nextTestDate);
+  if (d===null) return 'ok';
+  if (d<0) return 'danger';
+  if (d<=7) return 'warning';
+  return 'ok';
+}
+
+// ─────────────────────────────────────────────
+// INTERVAL TYPE SWITCHER
+// ─────────────────────────────────────────────
+function setItype(type) {
+  currentItype = type;
+  document.getElementById('itype-repeat').classList.toggle('sel', type==='repeat');
+  document.getElementById('itype-staged').classList.toggle('sel', type==='staged');
+  document.getElementById('repeat-section').classList.toggle('hidden', type!=='repeat');
+  document.getElementById('staged-section').classList.toggle('hidden', type!=='staged');
+  if (type==='staged' && stageRows.length===0) { addStageRow(); addStageRow(); }
+}
+
+// ─────────────────────────────────────────────
+// STAGE BUILDER
+// ─────────────────────────────────────────────
+function addStageRow(days=30) {
+  stageRows.push({ id: uid(), days });
+  renderStageList();
+}
+function removeStageRow(id) {
+  if (stageRows.length<=1) return;
+  stageRows = stageRows.filter(r=>r.id!==id);
+  renderStageList();
+}
+function renderStageList() {
+  const el = document.getElementById('stage-list');
+  el.innerHTML = stageRows.map((row, i) => `
+    <div class="stage-row" id="sr-${row.id}">
+      <div class="stage-num">${i+1}</div>
+      <div class="stage-inputs">
+        <span style="font-size:12px;color:var(--gray-500);font-weight:600;white-space:nowrap">ครั้งที่ ${i+1}:</span>
+        <select class="form-select" style="width:130px;padding:5px 8px" id="sd-${row.id}" onchange="updateStageDay('${row.id}',this.value)">
+          ${PRESET_DAYS.map(p=>`<option value="${p.days}" ${row.days===p.days?'selected':''}>${p.label}</option>`).join('')}
+          <option value="0" ${![30,90,180,365].includes(row.days)?'selected':''}>กำหนดเอง</option>
+        </select>
+        <div id="sc-${row.id}" class="${[30,90,180,365].includes(row.days)?'hidden':''}">
+          <input type="number" class="form-input" style="width:72px;padding:5px 8px" value="${![30,90,180,365].includes(row.days)?row.days:''}" placeholder="วัน" min="1" max="3650" oninput="updateStageDayCustom('${row.id}',this.value)">
+        </div>
+      </div>
+      <button class="stage-del" onclick="removeStageRow('${row.id}')" title="ลบ">×</button>
+    </div>`).join('');
+}
+function updateStageDay(id, val) {
+  const row = stageRows.find(r=>r.id===id);
+  if (!row) return;
+  const custom = document.getElementById('sc-'+id);
+  if (val==='0') { custom.classList.remove('hidden'); }
+  else { row.days = parseInt(val); custom.classList.add('hidden'); }
+}
+function updateStageDayCustom(id, val) {
+  const row = stageRows.find(r=>r.id===id);
+  if (row && val) row.days = parseInt(val);
+}
+
+// ─────────────────────────────────────────────
+// INTERVAL SELECTOR (repeat mode)
+// ─────────────────────────────────────────────
+function selInterval(btn) {
+  document.querySelectorAll('.interval-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel'); selIntervalDays=parseInt(btn.dataset.days);
+  document.getElementById('custom-row').classList.toggle('hidden', selIntervalDays!==0);
+}
+
+// ─────────────────────────────────────────────
+// FORM — ADD / EDIT
+// ─────────────────────────────────────────────
+function openAddForm() {
+  editingPieceId = null;
+  document.getElementById('form-title-text').textContent = 'ข้อมูลชิ้นงาน';
+  document.getElementById('form-edit-badge').classList.add('hidden');
+  document.getElementById('form-save-btn').textContent = 'บันทึกชิ้นงาน';
+  clearFormFields();
+  switchTab('add');
+}
+
+function openEditForm(id) {
+  const p = pieces.find(x=>x.id===id); if (!p) return;
+  editingPieceId = id;
+  document.getElementById('form-title-text').textContent = 'แก้ไขชิ้นงาน';
+  document.getElementById('form-edit-badge').classList.remove('hidden');
+  document.getElementById('form-save-btn').textContent = 'บันทึกการแก้ไข';
+
+  // Fill fields
+  document.getElementById('f-name').value     = p.name || '';
+  document.getElementById('f-number').value   = p.pieceNumber || '';
+  document.getElementById('f-topic').value    = p.testTopic || '';
+  document.getElementById('f-owner').value    = p.owner || '';
+  document.getElementById('f-location').value = p.location || '';
+  document.getElementById('f-note').value     = p.note || '';
+  document.getElementById('f-last-date').value= p.lastTestDate || '';
+
+  // Interval type
+  if (p.intervalType === 'staged') {
+    setItype('staged');
+    stageRows = (p.stages || []).map(d => ({ id: uid(), days: d }));
+    renderStageList();
+  } else {
+    setItype('repeat');
+    selIntervalDays = p.intervalDays || 90;
+    // Mark the matching btn
+    document.querySelectorAll('.interval-btn').forEach(b => {
+      b.classList.toggle('sel', parseInt(b.dataset.days)===selIntervalDays);
+    });
+    if (![30,90,180,365].includes(selIntervalDays)) {
+      // custom
+      document.querySelectorAll('.interval-btn').forEach(b=>{ if(parseInt(b.dataset.days)===0) b.classList.add('sel'); });
+      document.getElementById('custom-row').classList.remove('hidden');
+      document.getElementById('f-custom-days').value = selIntervalDays;
+    } else {
+      document.getElementById('custom-row').classList.add('hidden');
+    }
+  }
+  switchTab('add');
+}
+
+function clearFormFields() {
+  ['f-name','f-number','f-topic','f-owner','f-location','f-note','f-custom-days'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('f-last-date').value = '';
+  document.querySelectorAll('.interval-btn').forEach(b=>b.classList.remove('sel'));
+  selIntervalDays=0; stageRows=[];
+  document.getElementById('custom-row').classList.add('hidden');
+  setItype('repeat');
+}
+
+function cancelForm() {
+  editingPieceId = null;
+  clearFormFields();
+  switchTab('dashboard');
+}
+
+function savePiece() {
+  const name     = document.getElementById('f-name').value.trim();
+  const number   = document.getElementById('f-number').value.trim();
+  const topic    = document.getElementById('f-topic').value.trim();
+  const owner    = document.getElementById('f-owner').value.trim();
+  const location = document.getElementById('f-location').value.trim();
+  const lastDate = document.getElementById('f-last-date').value;
+  const note     = document.getElementById('f-note').value.trim();
+
+  if (!name||!number||!topic) { alert('กรุณากรอก:\n• ชื่อชิ้นงาน\n• เลขที่ชิ้นงาน\n• หัวข้อทดสอบ'); return; }
+
+  let intervalType, intervalDays, stages, nextTestDate, currentStageIdx;
+
+  if (currentItype === 'staged') {
+    // Collect stage days
+    const collected = stageRows.map(row => {
+      // try to read custom input if visible
+      const customEl = document.querySelector(`#sc-${row.id} input`);
+      const selEl = document.getElementById('sd-'+row.id);
+      if (selEl && selEl.value === '0' && customEl) return parseInt(customEl.value)||row.days;
+      return row.days;
+    }).filter(d => d>0);
+    if (collected.length===0) { alert('กรุณาเพิ่มครั้งที่ทดสอบอย่างน้อย 1 ครั้ง'); return; }
+    intervalType = 'staged';
+    stages = collected;
+    intervalDays = collected[0];
+
+    if (editingPieceId) {
+      // Keep current stage unless resetting
+      const existing = pieces.find(x=>x.id===editingPieceId);
+      currentStageIdx = existing ? (existing.currentStageIdx||0) : 0;
+    } else {
+      currentStageIdx = 0;
+    }
+    const base = lastDate || todayStr();
+    nextTestDate = addDays(base, stages[currentStageIdx] || stages[0]);
+  } else {
+    let iDays = selIntervalDays;
+    if (iDays===0) iDays = parseInt(document.getElementById('f-custom-days').value);
+    if (!iDays||iDays<1) { alert('กรุณาเลือกหรือกำหนดความถี่'); return; }
+    intervalType = 'repeat';
+    intervalDays = iDays;
+    stages = null;
+    currentStageIdx = null;
+    const base = lastDate || todayStr();
+    nextTestDate = addDays(base, intervalDays);
+  }
+
+  if (editingPieceId) {
+    // UPDATE existing
+    const idx = pieces.findIndex(x=>x.id===editingPieceId);
+    if (idx===-1) return;
+    const old = pieces[idx];
+    pieces[idx] = {
+      ...old,
+      name, pieceNumber:number, testTopic:topic, owner, location, note,
+      intervalType, intervalDays, stages, currentStageIdx,
+      lastTestDate: lastDate || old.lastTestDate,
+      nextTestDate,
+      completed: false // unmark done if editing
+    };
+    showToast(`แก้ไข "${name}" เรียบร้อย ✓`);
+  } else {
+    // ADD new
+    pieces.push({
+      id: uid(), name, pieceNumber:number, testTopic:topic,
+      intervalType, intervalDays, stages, currentStageIdx,
+      owner, location, note,
+      lastTestDate: lastDate||null,
+      nextTestDate,
+      completed: false,
+      createdAt: new Date().toISOString()
+    });
+    showToast(`เพิ่ม "${name}" เรียบร้อย ✓`);
+  }
+
+  editingPieceId = null;
+  persist(); clearFormFields(); switchTab('dashboard'); renderAll();
+  if (Notification.permission==='granted') setTimeout(checkAndNotify,500);
+}
+
+function delPiece(id) {
+  const p = pieces.find(x=>x.id===id);
+  if (!p||!confirm(`ลบ "${p.name}" (${p.pieceNumber})?`)) return;
+  pieces = pieces.filter(x=>x.id!==id); persist(); renderAll(); showToast('ลบชิ้นงานเรียบร้อย');
+}
+
+// ─────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────
+function renderAll() {
+  renderNotifBar(); renderHeaderStats(); renderPieces();
+  renderHistFilterOptions(); renderHistory(); renderSchedPreview();
+}
+
+function renderNotifBar() {
+  const bar = document.getElementById('notif-bar');
+  const od = pieces.filter(p=>getStatus(p)==='danger');
+  const sw = pieces.filter(p=>getStatus(p)==='warning');
+  if (!od.length&&!sw.length) { bar.style.display='none'; return; }
+  let parts=[];
+  if (od.length) { const n=od.slice(0,2).map(p=>`${p.name}`).join(', '); parts.push(`⚠ เกินกำหนด ${od.length} รายการ: ${n}`); }
+  if (sw.length) { const n=sw.slice(0,2).map(p=>p.name).join(', '); parts.push(`🔔 ครบกำหนดใน 7 วัน: ${n}`); }
+  bar.style.display='flex'; bar.className='notif-bar '+(od.length?'notif-danger':'notif-warning');
+  bar.innerHTML=parts.join(' &nbsp;|&nbsp; ');
+}
+
+function renderHeaderStats() {
+  const u = pieces.filter(p=>!['ok','done'].includes(getStatus(p))).length;
+  document.getElementById('hstat-total').textContent = pieces.length;
+  document.getElementById('hstat-due').textContent = u||'—';
+  document.getElementById('dash-count').textContent = `${pieces.length} รายการ`;
+}
+
+function renderPieces() {
+  const grid = document.getElementById('pieces-grid');
+  if (!pieces.length) {
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><h3>ยังไม่มีชิ้นงานในระบบ</h3><p>เพิ่มชิ้นงานแรกเพื่อเริ่มติดตาม</p><button class="btn btn-primary btn-big" onclick="openAddForm()">+ เพิ่มชิ้นงาน</button></div>`;
+    return;
+  }
+  const sorted = [...pieces].sort((a,b)=>{
+    const order = {danger:0,warning:1,ok:2,done:9};
+    const sa=order[getStatus(a)]??5, sb=order[getStatus(b)]??5;
+    if (sa!==sb) return sa-sb;
+    return (daysUntil(a.nextTestDate)??9999)-(daysUntil(b.nextTestDate)??9999);
+  });
+  const g = {
+    danger:  sorted.filter(p=>getStatus(p)==='danger'),
+    warning: sorted.filter(p=>getStatus(p)==='warning'),
+    ok:      sorted.filter(p=>getStatus(p)==='ok'),
+    done:    sorted.filter(p=>getStatus(p)==='done')
+  };
+  let html='';
+  if (g.danger.length)  { html+=`<div class="group-label group-danger" style="grid-column:1/-1">⚠ เกินกำหนดทดสอบ (${g.danger.length})</div>`;  html+=g.danger.map(pieceCard).join(''); }
+  if (g.warning.length) { html+=`<div class="group-label group-warning" style="grid-column:1/-1">🔔 ใกล้ถึงกำหนด — ภายใน 7 วัน (${g.warning.length})</div>`; html+=g.warning.map(pieceCard).join(''); }
+  if (g.ok.length)      { if(g.danger.length+g.warning.length>0) html+=`<div class="group-label group-ok" style="grid-column:1/-1">✓ ปกติ (${g.ok.length})</div>`; html+=g.ok.map(pieceCard).join(''); }
+  if (g.done.length)    { html+=`<div class="group-label group-done" style="grid-column:1/-1">🏁 ทดสอบครบทุกขั้นตอนแล้ว (${g.done.length})</div>`; html+=g.done.map(pieceCard).join(''); }
+  grid.innerHTML=html;
+}
+
+function pieceCard(p) {
+  const st = getStatus(p), days = daysUntil(p.nextTestDate);
+  const sm = {
+    danger:  { pill:'pill-danger',  label:days<0?`เกิน ${Math.abs(days)} วัน`:'วันนี้!', cdClass:'cd-danger',  cdText:days<0?`${Math.abs(days)}`:'0', cdSub:days<0?'วันที่เกินกำหนด':'วันนี้ครบกำหนด' },
+    warning: { pill:'pill-warning', label:days===0?'วันนี้!':`อีก ${days} วัน`,          cdClass:'cd-warning', cdText:`${days}`,                       cdSub:'วันที่เหลือก่อนครบกำหนด' },
+    ok:      { pill:'pill-ok',      label:`อีก ${days} วัน`,                             cdClass:'cd-ok',      cdText:`${days}`,                       cdSub:'วันที่เหลือก่อนครบกำหนด' },
+    done:    { pill:'pill-done',    label:'ครบทุกขั้นตอน',                               cdClass:'cd-done',    cdText:'✓',                             cdSub:'ทดสอบครบแล้ว' }
+  };
+  const s = sm[st] || sm.ok;
+
+  // Stage progress
+  let stageHTML = '';
+  if (p.intervalType==='staged' && p.stages?.length) {
+    const total = p.stages.length;
+    const done  = p.completed ? total : (p.currentStageIdx||0);
+    stageHTML = `
+      <div class="stage-bar">${p.stages.map((_,i)=>`<div class="stage-dot ${i<done?'done':i===done&&!p.completed?'active':''}"></div>`).join('')}</div>
+      <div class="stage-lbl">ขั้นตอน ${p.completed?total:Math.min(done+1,total)} / ${total}${p.completed?'  🏁':''}</div>`;
+  }
+
+  const schedLbl = p.intervalType==='staged'
+    ? (p.completed ? 'ครบทุกขั้นตอน' : `ขั้นตอนที่ ${(p.currentStageIdx||0)+1}: ${intervalLbl(p.stages[p.currentStageIdx||0]||0)}`)
+    : `ทุก ${intervalLbl(p.intervalDays)}`;
+
+  return `<div class="piece-card s-${st}">
+    <div class="pc-head">
+      <div><div class="pc-name">${esc(p.name)}</div><div class="pc-number">เลขที่: ${esc(p.pieceNumber)}</div></div>
+      <span class="status-pill ${s.pill}">${s.label}</span>
+    </div>
+    ${stageHTML}
+    <div class="countdown-box ${s.cdClass}">
+      <div class="cd-days">${s.cdText}</div>
+      <div class="cd-label">${s.cdSub}</div>
+      ${!p.completed && p.nextTestDate ? `<div style="margin-top:6px;font-size:13px;font-weight:700;letter-spacing:-0.2px">📅 ${fmtDate(p.nextTestDate)}</div>` : ''}
+    </div>
+    <div class="pc-info">
+      <div class="pi-item"><span class="pi-lbl">หัวข้อทดสอบ</span><span class="pi-val">${esc(p.testTopic)}</span></div>
+      <div class="pi-item"><span class="pi-lbl">กำหนดการ</span><span class="pi-val">${schedLbl}</span></div>
+      <div class="pi-item"><span class="pi-lbl">ทดสอบล่าสุด</span><span class="pi-val">${fmtDate(p.lastTestDate)}</span></div>
+      ${p.owner?`<div class="pi-item"><span class="pi-lbl">ผู้รับผิดชอบ</span><span class="pi-val">${esc(p.owner)}</span></div>`:''}
+      ${p.location?`<div class="pi-item"><span class="pi-lbl">สถานที่</span><span class="pi-val">${esc(p.location)}</span></div>`:''}
+    </div>
+    <div class="pc-actions">
+      ${p.completed?'<span style="font-size:12px;color:var(--done);font-weight:600;flex:1;text-align:center">🏁 ทดสอบครบทุกขั้นตอนแล้ว</span>':`<button class="btn btn-primary" onclick="openModal('${p.id}')">บันทึกผลการทดสอบ</button>`}
+      <button class="btn btn-edit" onclick="openEditForm('${p.id}')" title="แก้ไข">✏️</button>
+      <button class="btn btn-ghost" title="ลบ" onclick="delPiece('${p.id}')">🗑</button>
+    </div>
+  </div>`;
+}
+
+// ─────────────────────────────────────────────
+// HISTORY
+// ─────────────────────────────────────────────
+function renderHistFilterOptions() {
+  const sel=document.getElementById('hist-filter-piece'), cur=sel.value;
+  const pids=[...new Set(testHistory.map(h=>h.pieceId))];
+  sel.innerHTML='<option value="">ชิ้นงานทั้งหมด</option>';
+  pids.forEach(pid=>{
+    const h=testHistory.find(r=>r.pieceId===pid);
+    sel.innerHTML+=`<option value="${pid}" ${pid===cur?'selected':''}>${h?`${h.pieceName} (${h.pieceNumber})`:pid}</option>`;
+  });
+}
+
+function renderHistory() {
+  const list=document.getElementById('history-list');
+  const fp=document.getElementById('hist-filter-piece').value;
+  const fr=document.getElementById('hist-filter-result').value;
+  let records=[...testHistory].reverse();
+  if(fp) records=records.filter(h=>h.pieceId===fp);
+  if(fr) records=records.filter(h=>h.result===fr);
+  if(!records.length){list.innerHTML='<div class="empty-state"><div class="empty-icon">📄</div><h3>ยังไม่มีประวัติ</h3><p>บันทึกผลการทดสอบจากแดชบอร์ดเพื่อดูที่นี่</p></div>';return;}
+  const rLbl={pass:'ผ่าน',fail:'ไม่ผ่าน',conditional:'มีเงื่อนไข'};
+  const rCls={pass:'r-pass',fail:'r-fail',conditional:'r-conditional'};
+  list.innerHTML=records.map(r=>{
+    const done=r.checklist.filter(c=>c.checked).length, total=r.checklist.length, pct=total?Math.round(done/total*100):0;
+    const clItems=r.checklist.map(c=>`<div style="font-size:12px;color:${c.checked?'#059669':'var(--gray-500)'};padding:2px 0">${c.checked?'☑':'☐'} ${esc(c.item)}</div>`).join('');
+    const stageLbl = r.stageLabel ? `<span>📋 ${esc(r.stageLabel)}</span>` : '';
+    return `<div class="hist-item">
+      <div class="hist-head">
+        <div><div class="hist-title">${esc(r.pieceName)}</div><div class="hist-sub">เลขที่: ${esc(r.pieceNumber)} · ${esc(r.testTopic)}</div></div>
+        <span class="result-pill ${rCls[r.result]||'r-pass'}">${rLbl[r.result]||r.result}</span>
+      </div>
+      <div class="hist-meta"><span>📅 ${fmtDate(r.testDate)}</span>${r.owner?`<span>👤 ${esc(r.owner)}</span>`:''}${stageLbl}<span>☑ ${done}/${total}</span></div>
+      ${r.notes?`<div class="hist-notes">${esc(r.notes)}</div>`:''}
+      <div class="progress-wrap">
+        <span class="progress-label" style="color:${pct===100?'var(--success)':'var(--gray-500)'}">${pct}%</span>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <details style="font-size:11px;cursor:pointer"><summary style="color:var(--primary);font-weight:700;list-style:none;cursor:pointer">ดู Checklist</summary><div style="margin-top:5px;padding:7px;background:var(--gray-50);border-radius:5px">${clItems}</div></details>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────
+function switchTab(tab) {
+  ['dashboard','add','history','notif'].forEach(t=>{
+    document.getElementById(`tab-${t}`).classList.toggle('hidden',t!==tab);
+    document.getElementById(`tbtn-${t}`).classList.toggle('active',t===tab);
+  });
+  if(tab==='history'){renderHistFilterOptions();renderHistory();}
+  if(tab==='notif') updateNotifUI();
+}
+
+// ─────────────────────────────────────────────
+// MODAL — TEST RESULT
+// ─────────────────────────────────────────────
+function openModal(pieceId) {
+  modalPieceId=pieceId; selResultType=null;
+  const p=pieces.find(x=>x.id===pieceId); if(!p) return;
+  const days=daysUntil(p.nextTestDate);
+  const dc=days<0?'var(--danger)':days<=7?'var(--warning)':'var(--success)';
+  const dt=days<0?`เกินกำหนด ${Math.abs(days)} วัน`:days===0?'วันนี้!':`อีก ${days} วัน`;
+
+  // Stage label
+  let stageInfo = '';
+  if (p.intervalType==='staged' && p.stages) {
+    const idx = p.currentStageIdx||0;
+    stageInfo = `<div class="ig-item"><span class="ig-lbl">ขั้นตอนที่</span><span class="ig-val">${idx+1} / ${p.stages.length} (${intervalLbl(p.stages[idx]||0)})</span></div>`;
+  }
+
+  document.getElementById('modal-info').innerHTML=`
+    <div class="ig-item"><span class="ig-lbl">ชื่อชิ้นงาน</span><span class="ig-val">${esc(p.name)}</span></div>
+    <div class="ig-item"><span class="ig-lbl">เลขที่</span><span class="ig-val">${esc(p.pieceNumber)}</span></div>
+    <div class="ig-item"><span class="ig-lbl">หัวข้อทดสอบ</span><span class="ig-val">${esc(p.testTopic)}</span></div>
+    <div class="ig-item"><span class="ig-lbl">กำหนดทดสอบ</span><span class="ig-val" style="color:${dc}">${fmtDate(p.nextTestDate)} (${dt})</span></div>
+    ${p.owner?`<div class="ig-item"><span class="ig-lbl">ผู้รับผิดชอบ</span><span class="ig-val">${esc(p.owner)}</span></div>`:''}
+    ${stageInfo}`;
+  document.getElementById('modal-date').value=todayStr();
+  document.getElementById('modal-notes').value='';
+  ['r-pass','r-fail','r-conditional'].forEach(id=>document.getElementById(id).className='r-opt');
+  modalCL=DEFAULT_CL.map(item=>({item,checked:false}));
+  renderModalCL();
+  document.getElementById('modal-overlay').classList.remove('hidden');
+}
+
+function renderModalCL() {
+  document.getElementById('modal-checklist').innerHTML=modalCL.map((c,i)=>`
+    <div class="cl-item ${c.checked?'cl-checked':''}" onclick="toggleCL(${i})">
+      <input type="checkbox" ${c.checked?'checked':''} onclick="event.stopPropagation();toggleCL(${i})">
+      <span class="cl-label">${esc(c.item)}</span>
+    </div>`).join('');
+}
+function toggleCL(i){modalCL[i].checked=!modalCL[i].checked;renderModalCL();}
+function selResult(type){
+  selResultType=type;
+  ['r-pass','r-fail','r-conditional'].forEach(id=>document.getElementById(id).className='r-opt');
+  const cls={pass:'r-pass-sel',fail:'r-fail-sel',conditional:'r-cond-sel'};
+  document.getElementById('r-'+type).classList.add(cls[type]);
+}
+function closeModal(){document.getElementById('modal-overlay').classList.add('hidden');modalPieceId=null;}
+
+function saveTestResult() {
+  if(!selResultType){alert('กรุณาเลือกผลการทดสอบ');return;}
+  const p=pieces.find(x=>x.id===modalPieceId); if(!p) return;
+  const testDate=document.getElementById('modal-date').value||todayStr();
+  const notes=document.getElementById('modal-notes').value.trim();
+
+  // Build stage label for history
+  let stageLabel = '';
+  if (p.intervalType==='staged' && p.stages) {
+    const idx=p.currentStageIdx||0;
+    stageLabel=`ครั้งที่ ${idx+1} (${intervalLbl(p.stages[idx]||0)})`;
+  }
+
+  testHistory.push({
+    id:uid(), pieceId:p.id, pieceName:p.name, pieceNumber:p.pieceNumber,
+    testTopic:p.testTopic, owner:p.owner, testDate, result:selResultType,
+    notes, stageLabel, checklist:[...modalCL], createdAt:new Date().toISOString()
+  });
+
+  p.lastTestDate = testDate;
+
+  if (p.intervalType==='staged' && p.stages) {
+    const nextIdx = (p.currentStageIdx||0) + 1;
+    if (nextIdx >= p.stages.length) {
+      // All stages complete!
+      p.completed = true;
+      p.nextTestDate = null;
+      p.currentStageIdx = p.stages.length;
+      showToast(`🏁 ${p.name} — ทดสอบครบทุกขั้นตอนแล้ว!`);
+    } else {
+      p.currentStageIdx = nextIdx;
+      p.nextTestDate = addDays(testDate, p.stages[nextIdx]);
+      const rLbl={pass:'ผ่าน ✓',fail:'ไม่ผ่าน ✗',conditional:'มีเงื่อนไข ⚡'};
+      showToast(`บันทึกแล้ว: ${p.name} ${rLbl[selResultType]}<br>ขั้นตอนต่อไป (ที่ ${nextIdx+1}/${p.stages.length}): ${fmtDate(p.nextTestDate)}`);
+    }
+  } else {
+    p.nextTestDate = addDays(testDate, p.intervalDays);
+    const rLbl={pass:'ผ่าน ✓',fail:'ไม่ผ่าน ✗',conditional:'มีเงื่อนไข ⚡'};
+    showToast(`บันทึกแล้ว: ${p.name} ${rLbl[selResultType]}<br>ครั้งต่อไป: ${fmtDate(p.nextTestDate)}`);
+  }
+
+  persist(); closeModal(); renderAll();
+  if(Notification.permission==='granted') setTimeout(checkAndNotify,500);
+}
+
+// ─────────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────────
+function buildNotifPayload(p) {
+  if (p.completed) return null;
+  const days=daysUntil(p.nextTestDate);
+  if(days===null) return null;
+  const {togOverdue,togDueday,tog7day}=notifSettings;
+  if(days<0&&togOverdue)  return {title:'⚠️ เกินกำหนดทดสอบ!',    body:`ชิ้นงาน: ${p.name} (${p.pieceNumber})\nหัวข้อ: ${p.testTopic}\nเกินกำหนด ${Math.abs(days)} วัน`, tag:`od-${p.id}`};
+  if(days===0&&togDueday) return {title:'🔔 วันนี้ครบกำหนดทดสอบ!', body:`ชิ้นงาน: ${p.name} (${p.pieceNumber})\nหัวข้อ: ${p.testTopic}\nกรุณาดำเนินการวันนี้`,          tag:`due-${p.id}`};
+  if(days>0&&days<=7&&tog7day) return {title:'🔔 ใกล้ถึงกำหนดทดสอบ', body:`ชิ้นงาน: ${p.name} (${p.pieceNumber})\nหัวข้อ: ${p.testTopic}\nครบกำหนดใน ${days} วัน (${fmtDate(p.nextTestDate)})`, tag:`soon-${p.id}`};
+  return null;
+}
+
+function checkAndNotify() {
+  if(Notification.permission!=='granted') return;
+  const today=todayStr(), firedKey='trm_fired_'+today;
+  let fired={};
+  try{fired=JSON.parse(localStorage.getItem(firedKey)||'{}');}catch(e){}
+  pieces.forEach((p,i)=>{
+    const payload=buildNotifPayload(p); if(!payload) return;
+    const isOD=payload.tag.startsWith('od-');
+    if(!isOD&&fired[payload.tag]) return;
+    setTimeout(()=>{
+      try{ new Notification(payload.title,{body:payload.body,tag:payload.tag,requireInteraction:isOD,vibrate:[200,100,200]}); }
+      catch(err){}
+    },i*600);
+    if(!isOD){fired[payload.tag]=true;}
+  });
+  try{localStorage.setItem(firedKey,JSON.stringify(fired));}catch(e){}
+  try{Object.keys(localStorage).filter(k=>k.startsWith('trm_fired_')&&k!==firedKey).forEach(k=>localStorage.removeItem(k));}catch(e){}
+}
+
+function testNotification() {
+  if(Notification.permission!=='granted'){handleNotifPermission();return;}
+  const demo=pieces.find(p=>!p.completed)||{name:'ชิ้นงานสาธิต',pieceNumber:'DEMO-001',testTopic:'ทดสอบระบบแจ้งเตือน',nextTestDate:todayStr()};
+  const days=daysUntil(demo.nextTestDate);
+  const dt=days<0?`เกินกำหนด ${Math.abs(days)} วัน`:days===0?'วันนี้ครบกำหนด!':`อีก ${days} วัน`;
+  new Notification(`🔔 ทดสอบ: ${demo.name}`,{body:`เลขที่: ${demo.pieceNumber}\nหัวข้อ: ${demo.testTopic}\nสถานะ: ${dt}`,tag:'test-'+Date.now()});
+  showToast('ส่ง Notification ทดสอบแล้ว ✓');
+}
+
+function startHourlyCheck() {
+  if(notifCheckInterval) clearInterval(notifCheckInterval);
+  notifCheckInterval=setInterval(()=>{ if(Notification.permission==='granted') checkAndNotify(); }, 3600000);
+}
+
+async function handleNotifPermission() {
+  if(!('Notification' in window)){alert('เบราว์เซอร์นี้ไม่รองรับ Notification');return;}
+  if(Notification.permission==='denied'){alert('การแจ้งเตือนถูกบล็อก\nไปที่ตั้งค่าเบราว์เซอร์ → Notifications → อนุญาต');return;}
+  const perm=await Notification.requestPermission();
+  updateNotifUI();
+  if(perm==='granted'){ showToast('✓ เปิดการแจ้งเตือนสำเร็จ!'); setTimeout(()=>{checkAndNotify();startHourlyCheck();},400); }
+}
+
+function updateNotifUI() {
+  const perm=('Notification' in window)?Notification.permission:'unsupported';
+  const btn=document.getElementById('notif-perm-btn');
+  const box=document.getElementById('perm-box');
+  const mainBtn=document.getElementById('perm-main-btn');
+  const iosHint=document.getElementById('ios-hint');
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+  if(isIOS&&!window.navigator.standalone) iosHint.classList.remove('hidden');
+  if(perm==='granted'){
+    btn.className='notif-btn granted'; document.getElementById('notif-btn-icon').textContent='🔔'; document.getElementById('notif-btn-text').textContent='แจ้งเตือน: เปิด';
+    box.className='perm-box perm-granted'; box.innerHTML='<span class="perm-icon">✅</span><div class="perm-text"><h4>เปิดการแจ้งเตือนแล้ว</h4><p>ระบบจะแจ้งเตือนทุกครั้งที่เปิดแอปเมื่อมีงานต้องดำเนินการ</p></div>';
+    mainBtn.textContent='🔔 ทดสอบส่ง Notification'; mainBtn.onclick=testNotification;
+  } else if(perm==='denied'){
+    btn.className='notif-btn denied'; document.getElementById('notif-btn-icon').textContent='🔕'; document.getElementById('notif-btn-text').textContent='ถูกบล็อก';
+    box.className='perm-box perm-denied'; box.innerHTML='<span class="perm-icon">❌</span><div class="perm-text"><h4>การแจ้งเตือนถูกบล็อก</h4><p>ไปที่ตั้งค่าเบราว์เซอร์ → Notifications → อนุญาต</p></div>';
+    mainBtn.textContent='📖 วิธีเปิดการแจ้งเตือน'; mainBtn.onclick=()=>alert('วิธีเปิด:\n🤖 Android: ตั้งค่า Chrome → เนื้อหาเว็บไซต์ → การแจ้งเตือน\n🍎 iOS: Add to Home Screen แล้วค่อยขอสิทธิ์');
+  } else {
+    btn.className='notif-btn'; document.getElementById('notif-btn-icon').textContent='🔔'; document.getElementById('notif-btn-text').textContent='เปิดแจ้งเตือน';
+    box.className='perm-box perm-default'; box.innerHTML='<span class="perm-icon">🔔</span><div class="perm-text"><h4>ยังไม่ได้เปิดการแจ้งเตือน</h4><p>กดปุ่มด้านล่างเพื่อเริ่มรับการแจ้งเตือน</p></div>';
+    mainBtn.textContent='🔔 ขอสิทธิ์รับการแจ้งเตือน'; mainBtn.onclick=handleNotifPermission;
+  }
+  const t=document.getElementById('notif-time-input'); if(t)t.value=notifSettings.time||'08:00';
+  const tog7=document.getElementById('tog-7day'); if(tog7)tog7.checked=notifSettings.tog7day!==false;
+  const togD=document.getElementById('tog-dueday'); if(togD)togD.checked=notifSettings.togDueday!==false;
+  const togO=document.getElementById('tog-overdue'); if(togO)togO.checked=notifSettings.togOverdue!==false;
+  renderSchedPreview();
+}
+
+function saveNotifSettings(){
+  notifSettings.time=document.getElementById('notif-time-input').value;
+  notifSettings.tog7day=document.getElementById('tog-7day').checked;
+  notifSettings.togDueday=document.getElementById('tog-dueday').checked;
+  notifSettings.togOverdue=document.getElementById('tog-overdue').checked;
+  persist(); renderSchedPreview(); showToast('บันทึกการตั้งค่าแล้ว');
+}
+
+function renderSchedPreview() {
+  const el=document.getElementById('sched-preview'); if(!el) return;
+  const upcoming=[...pieces].filter(p=>!p.completed).map(p=>({...p,days:daysUntil(p.nextTestDate)})).filter(p=>p.days!==null&&p.days<=30).sort((a,b)=>a.days-b.days);
+  if(!upcoming.length){el.innerHTML='<p style="font-size:13px;color:var(--gray-500);text-align:center;padding:12px 0">ไม่มีชิ้นงานที่ต้องแจ้งเตือนใน 30 วันข้างหน้า</p>';return;}
+  el.innerHTML='<h4>รายการที่จะแจ้งเตือน</h4>'+upcoming.map(p=>{
+    const st=getStatus(p),dc=st==='danger'?'dot-danger':st==='warning'?'dot-warning':'dot-ok';
+    const dt=p.days<0?`เกิน ${Math.abs(p.days)} วัน`:p.days===0?'วันนี้!':`อีก ${p.days} วัน`;
+    const vc=st==='danger'?'var(--danger)':st==='warning'?'#d97706':'var(--success)';
+    return `<div class="sched-item"><div class="sched-dot ${dc}"></div><div class="sched-info"><div class="sched-name">${esc(p.name)} <span style="font-size:11px;color:var(--gray-500);font-weight:400">(${esc(p.pieceNumber)})</span></div><div class="sched-detail">${esc(p.testTopic)} · ${fmtDate(p.nextTestDate)}</div></div><div style="font-size:12px;font-weight:700;color:${vc};white-space:nowrap">${dt}</div></div>`;
+  }).join('');
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+window.addEventListener('load', () => {
+  document.getElementById('f-last-date').value = todayStr();
+  load();
+});
+</script>
+</body>
+</html>
